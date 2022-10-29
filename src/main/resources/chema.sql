@@ -1,0 +1,4 @@
+CREATE TABLE BANK_ACCOUNT(
+                        USER_ID SERIAL PRIMARY KEY NOT NULL,
+                        BALANCE NUMERIC
+)
