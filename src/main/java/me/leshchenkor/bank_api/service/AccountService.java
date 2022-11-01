@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.security.auth.login.AccountNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 
 //переделать в интерфейс и добавить реализацию в пакете impl?
 @Service
@@ -24,6 +26,10 @@ public class AccountService {
         BankAccount account = bankAccountRepository.findById(userId)
                 .orElseThrow(AccountNotFoundException::new);
         bankAccountRepository.delete(account);
+    }
+
+    public List<BankAccount> readAll(){
+        return new ArrayList<>(bankAccountRepository.findAll());
     }
 // --------------------------------------------------------------------------------------------------
 

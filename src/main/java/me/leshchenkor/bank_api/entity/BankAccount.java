@@ -1,24 +1,36 @@
 package me.leshchenkor.bank_api.entity;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
-
 import javax.persistence.*;
 
-@Data
-//@NoArgsConstructor
-//@RequiredArgsConstructor
 @Entity
-@Table(name = "BANK_ACCOUNT")
+@Table(name = "ACCOUNTS")
 public class BankAccount {
-    @Id
-    @GeneratedValue(generator = "increment")
-    @GenericGenerator(name = "increment", strategy = "increment")
-    @Column(name = "USER_ID", length = 8, nullable = false)
-    private Long user_id;
 
-    @Column(name = "BALANCE")
+    private Long user_id;
     private Double balance;
+
+    public BankAccount(Double balance) {
+        this.balance = balance;
+    }
+
+    public BankAccount() {
+    }
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    public Long getUser_id() {
+        return user_id;
+    }
+
+    public void setUser_id(Long user_id) {
+        this.user_id = user_id;
+    }
+
+    public Double getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Double balance) {
+        this.balance = balance;
+    }
 }
