@@ -2,57 +2,75 @@ package me.leshchenkor.bank_api.service;
 
 import lombok.RequiredArgsConstructor;
 import me.leshchenkor.bank_api.entity.BankAccount;
-import me.leshchenkor.bank_api.exception.NotEnoughMoneyException;
+import me.leshchenkor.bank_api.exception.AccountNotFoundException;
 import me.leshchenkor.bank_api.repository.BankAccountRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import javax.security.auth.login.AccountNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
-//переделать в интерфейс и добавить реализацию в пакете impl?
 @Service
 @RequiredArgsConstructor
 public class AccountService {
-    @Autowired
-    BankAccountRepository bankAccountRepository;
 
-    public BankAccount createAccount(BankAccount bankAcc) {
-        return bankAccountRepository.save(bankAcc);
+    private final BankAccountRepository bankAccountRepository;
+
+    public ResponseEntity<Object> createAccount(BankAccount bankAcc) {
+        bankAccountRepository.save(bankAcc);
+        return ResponseEntity.status(HttpStatus.CREATED).body("New account created successfully");
     }
 
-    public void deleteAccount(Long userId) throws AccountNotFoundException {
+//    public BankAccount findById(Long id) {
+//        return bankAccountRepository.findById(id).
+//                orElseThrow(() -> new AccountNotFoundException
+//                        (String.format("Account with [%s] not exist!", id)));
+//    }
+
+    public ResponseEntity<BankAccount> findById(Long id) {
+        return bankAccountRepository.findById(id)
+                .map(acc -> ResponseEntity.ok().body(acc))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    public void deleteAccount(Long userId) {
         BankAccount account = bankAccountRepository.findById(userId)
-                .orElseThrow(AccountNotFoundException::new);
+                .orElseThrow(() -> new AccountNotFoundException
+                        (String.format("Account with [%s] not exist!", userId)));
         bankAccountRepository.delete(account);
     }
 
-    public List<BankAccount> readAll(){
+    public List<BankAccount> readAll() {
         return new ArrayList<>(bankAccountRepository.findAll());
     }
-// --------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 
-    public double getClientBalance(long userId) throws AccountNotFoundException {
+    public double getBalanceByID(Long userId) {
         BankAccount account = bankAccountRepository.findById(userId)
-                .orElseThrow(AccountNotFoundException::new);
+                .orElseThrow(() -> new AccountNotFoundException
+                        (String.format("Account with [%s] not exist!", userId)));
         return account.getBalance();
     }
 
-    public BankAccount putMoney(long userId, double income) throws AccountNotFoundException {
-        BankAccount account = bankAccountRepository.findById(userId)
-                .orElseThrow(AccountNotFoundException::new);
-        account.setBalance(account.getBalance() + income);
+    public BankAccount putMoney(long userID, double amount) {
+        BankAccount account = bankAccountRepository.findById(userID)
+                .orElseThrow(() -> new AccountNotFoundException
+                        (String.format("Account with [%s] not exist!", userID)));
+        account.setBalance(account.getBalance() + amount);
         return bankAccountRepository.save(account);
     }
 
-    public BankAccount takeMoney(long userId, double spend) throws AccountNotFoundException, NotEnoughMoneyException {
-        BankAccount account = bankAccountRepository.findById(userId)
-                .orElseThrow(AccountNotFoundException::new);
-        if (account.getBalance() < spend) {
-            throw new NotEnoughMoneyException(spend);
+    public ResponseEntity<Object> takeMoney(long userID, double amount) {
+        BankAccount account = bankAccountRepository.findById(userID)
+                .orElseThrow(() -> new AccountNotFoundException
+                        (String.format("Account with [%s] not exist!", userID)));
+        if (account.getBalance() < amount) {
+            return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).
+                    body(String.format("Not enough money: '%s", amount));
         } else
-            account.setBalance(account.getBalance() - spend);
-        return bankAccountRepository.save(account);
+            account.setBalance(account.getBalance() - amount);
+        bankAccountRepository.save(account);
+        return ResponseEntity.status(HttpStatus.OK).body("Took successfully");
     }
 }

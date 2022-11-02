@@ -20,19 +20,21 @@ public class TransferService {
     @Autowired
     TransferRepository transferRepository;
 
-    public ResponseEntity<Object> transferMoney(long sender, long recipient, int amount) throws AccountNotFoundException {
+    public ResponseEntity<Object> transferMoney(long sender, long recipient, int amount)
+            throws AccountNotFoundException {
 
         Optional<BankAccount> fromAcc = bankAccountRepository.findById(sender);
         if (fromAcc.isPresent()) {
             if (fromAcc.get().getBalance() >= amount) {
                 fromAcc.get().setBalance(fromAcc.get().getBalance() - amount);
-            } else throw new AccountNotFoundException(sender);
+            } else throw new AccountNotFoundException(String.format("Sender with [%s] not exist!", sender));
 
             Optional<BankAccount> toAcc = bankAccountRepository.findById(recipient);
             if (toAcc.isPresent()) {
                 toAcc.get().setBalance(toAcc.get().getBalance() + amount);
             } else
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("recipient account" + recipient + "not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body
+                        ("recipient account" + recipient + "not found");
         }
         return ResponseEntity.status(HttpStatus.OK).body("Success: " + amount + " transferred for " + recipient);
 
