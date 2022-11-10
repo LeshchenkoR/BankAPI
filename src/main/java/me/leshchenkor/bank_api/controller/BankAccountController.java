@@ -1,5 +1,6 @@
 package me.leshchenkor.bank_api.controller;
 
+import me.leshchenkor.bank_api.dto.TransferRequestDTO;
 import me.leshchenkor.bank_api.entity.BankAccount;
 import me.leshchenkor.bank_api.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,5 +68,12 @@ public class BankAccountController {
     //    @ApiOperation(value = "Снятие средств")
     public ResponseEntity<Object> takeMoneyById(@PathVariable long userId, @PathVariable double amount) {
         return accountService.takeMoney(userId, amount);
+    }
+
+    @PostMapping(value = "/transfer")
+    //    @ApiOperation(value = "Перевод средств")
+    public ResponseEntity<Object> transferMoney(@RequestBody TransferRequestDTO transferRequestDTO) {
+        return accountService.transferMoney(transferRequestDTO.getAccountSource(),
+                transferRequestDTO.getAccountDestination(), transferRequestDTO.getAmount());
     }
 }
