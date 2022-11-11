@@ -58,16 +58,18 @@ public class BankAccountController {
         return accountService.getBalanceByID(id);
     }
 
-    @PutMapping(value = "/putMoney/{userId}/{amount}")
+    @PutMapping(value = "/putMoney/{userId}/{amount}/{description}")
     //    @ApiOperation(value = "Внесение средств")
-    public BankAccount putMoneyById(@PathVariable long userId, @PathVariable double amount) {
-        return accountService.putMoney(userId, amount);
+    public BankAccount putMoneyById(@PathVariable long userId, @PathVariable double amount,
+                                    @PathVariable String description ) {
+        return accountService.putMoney(userId, amount, description);
     }
 
-    @PostMapping(value = "/takeMoney/{userId}/{amount}")
+    @PostMapping(value = "/takeMoney/{userId}/{amount}/{description}")
     //    @ApiOperation(value = "Снятие средств")
-    public ResponseEntity<Object> takeMoneyById(@PathVariable long userId, @PathVariable double amount) {
-        return accountService.takeMoney(userId, amount);
+    public ResponseEntity<Object> takeMoneyById(@PathVariable long userId, @PathVariable double amount,
+                                                @PathVariable String description) {
+        return accountService.takeMoney(userId, amount, description);
     }
 
     @PostMapping(value = "/transfer")

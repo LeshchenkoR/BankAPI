@@ -24,9 +24,8 @@ public class BankAccount {
 
     public BankAccount() {
     }
-//    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @OneToMany
     @JoinColumn(name = "user_id",referencedColumnName = "user_id")
     @JsonIgnore
-    private List<Transfer> transferList;
+    private List<Operation> transferList;
 }
