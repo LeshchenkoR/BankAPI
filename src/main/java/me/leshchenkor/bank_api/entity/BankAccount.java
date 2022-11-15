@@ -24,8 +24,9 @@ public class BankAccount {
 
     public BankAccount() {
     }
-    @OneToMany
-    @JoinColumn(name = "user_id",referencedColumnName = "user_id")
+
+    @OneToMany(mappedBy = "user_id")
+   // @JoinColumn(name = "user_id",referencedColumnName = "user_id")
     @JsonIgnore
-    private List<Operation> transferList;
+    private List<Operation> operations;
 }

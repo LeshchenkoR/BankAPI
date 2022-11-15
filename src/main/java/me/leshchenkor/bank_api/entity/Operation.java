@@ -3,10 +3,10 @@ package me.leshchenkor.bank_api.entity;
 import lombok.Getter;
 import lombok.Setter;
 import me.leshchenkor.bank_api.dto.OperationType;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
+import java.util.Date;
 
 @Setter
 @Getter
@@ -20,9 +20,10 @@ public class Operation {
     private Long id;
     private Long user_id;
 
+    @CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "OPERATION_DATE")
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm") //ПАЧИМУ НЕ РАБОТАЕТ????!!!
-    private LocalDateTime date;
+    private Date date;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "OPERATION_TYPE")
@@ -33,9 +34,9 @@ public class Operation {
 //    @ManyToOne
 //    BankAccount bankAccount;
 
-    public Operation(Long user_id, LocalDateTime date, OperationType type, Double amount, String description) {
+    public Operation(Long user_id, Date date, OperationType type, Double amount, String description) {
         this.user_id = user_id;
-        this.date = date;
+        this.date = new Date();
         this.type = type;
         this.amount = amount;
         this.description = description;

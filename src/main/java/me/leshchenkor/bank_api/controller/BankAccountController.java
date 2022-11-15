@@ -1,13 +1,16 @@
 package me.leshchenkor.bank_api.controller;
 
+import me.leshchenkor.bank_api.dto.OperationListDTO;
 import me.leshchenkor.bank_api.dto.TransferRequestDTO;
 import me.leshchenkor.bank_api.entity.BankAccount;
+import me.leshchenkor.bank_api.entity.Operation;
 import me.leshchenkor.bank_api.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -22,15 +25,9 @@ public class BankAccountController {
         return accountService.createAccount(acc);
     }
 
-//    @GetMapping(value = "/{id}")
-//    //@ApiOperation(value = "Получение аккаунта по ID")
-//    public BankAccount getById(@PathVariable Long id) {
-//        return accountService.findById(id);
-//    }
-
     @GetMapping(value = "/{id}")
     //@ApiOperation(value = "Получение аккаунта по ID")
-    public ResponseEntity<BankAccount> getById(@PathVariable Long id) {
+    public BankAccount getById(@PathVariable Long id) {
         return accountService.findById(id);
     }
 
@@ -43,13 +40,12 @@ public class BankAccountController {
 
     @GetMapping(value = "/accounts")
     //    @ApiOperation(value = "Получение списка всех аккаунтов")
-    public ResponseEntity<List<BankAccount>> read() {
-        final List<BankAccount> bankAccounts = accountService.readAll();
+    public ResponseEntity<List<BankAccount>> readAccounts() {
+        final List<BankAccount> bankAccounts = accountService.readAllAccounts();
         return bankAccounts != null && !bankAccounts.isEmpty()
                 ? new ResponseEntity<>(bankAccounts, HttpStatus.OK)
                 : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
-
 //------------------------------------------------------------------------------------------------------
 
     @GetMapping(value = "/getBalance/{userId}")
@@ -58,18 +54,16 @@ public class BankAccountController {
         return accountService.getBalanceByID(id);
     }
 
-    @PutMapping(value = "/putMoney/{userId}/{amount}/{description}")
+    @PutMapping(value = "/putMoney")
     //    @ApiOperation(value = "Внесение средств")
-    public BankAccount putMoneyById(@PathVariable long userId, @PathVariable double amount,
-                                    @PathVariable String description ) {
-        return accountService.putMoney(userId, amount, description);
+    public BankAccount putMoneyById(@RequestBody Operation operation) {
+        return accountService.putMoney(operation.getUser_id(), operation.getAmount(), operation.getDescription());
     }
 
-    @PostMapping(value = "/takeMoney/{userId}/{amount}/{description}")
+    @PostMapping(value = "/takeMoney")
     //    @ApiOperation(value = "Снятие средств")
-    public ResponseEntity<Object> takeMoneyById(@PathVariable long userId, @PathVariable double amount,
-                                                @PathVariable String description) {
-        return accountService.takeMoney(userId, amount, description);
+    public ResponseEntity<Object> takeMoneyById(@RequestBody Operation operation) {
+        return accountService.takeMoney(operation.getUser_id(), operation.getAmount(), operation.getDescription());
     }
 
     @PostMapping(value = "/transfer")
@@ -77,5 +71,22 @@ public class BankAccountController {
     public ResponseEntity<Object> transferMoney(@RequestBody TransferRequestDTO transferRequestDTO) {
         return accountService.transferMoney(transferRequestDTO.getAccountSource(),
                 transferRequestDTO.getAccountDestination(), transferRequestDTO.getAmount());
+    }
+
+//    @GetMapping(value = "/history")
+//    //    @ApiOperation(value = "Получение списка всех операций за период")
+//    public ResponseEntity<List<Operation>> getOperationsBetweenDates
+//            (@RequestParam(required = false ) Date dateFrom, @RequestParam(required = false ) Date dateTo) {
+//        final List<Operation> operationBetweenDates = accountService.getOperationList(dateFrom, dateTo);
+//        return operationBetweenDates != null && !operationBetweenDates.isEmpty()
+//                ? new ResponseEntity<>(operationBetweenDates, HttpStatus.OK)
+//                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
+//    }
+    //----------------------------------------------------------------------------
+
+    @PostMapping("/history")
+    //    @ApiOperation(value = "Получение списка всех операций за период")
+    public List<Operation> getOperations(@RequestBody OperationListDTO listDTO) {
+        return accountService.getOperationList(listDTO);
     }
 }
