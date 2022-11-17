@@ -4,13 +4,13 @@ import me.leshchenkor.bank_api.dto.OperationListDTO;
 import me.leshchenkor.bank_api.dto.TransferRequestDTO;
 import me.leshchenkor.bank_api.entity.BankAccount;
 import me.leshchenkor.bank_api.entity.Operation;
+import me.leshchenkor.bank_api.exception.AccountBalanceChangeException;
 import me.leshchenkor.bank_api.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -20,22 +20,21 @@ public class BankAccountController {
     AccountService accountService;
 
     @PostMapping(value = "/create")
-    //    @ApiOperation(value = "Создание нового аккаунта")
+    //  @Operation(summary = "Создание нового аккаунта")
     public ResponseEntity<Object> createAccount(@RequestBody BankAccount acc) {
-        return accountService.createAccount(acc);
+        return ResponseEntity.ok(accountService.createAccount(acc));
     }
 
-    @GetMapping(value = "/{id}")
-    //@ApiOperation(value = "Получение аккаунта по ID")
-    public BankAccount getById(@PathVariable Long id) {
-        return accountService.findById(id);
+    @GetMapping("{id}")
+    public ResponseEntity<BankAccount> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(accountService.findById(id));
     }
 
     @DeleteMapping("/delete/{user_id}")
     //    @ApiOperation(value = "Удаление аккаунта")
     public ResponseEntity<?> deleteBankAccount(@PathVariable Long user_id) {
         accountService.deleteAccount(user_id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body("Success");
     }
 
     @GetMapping(value = "/accounts")
@@ -55,20 +54,24 @@ public class BankAccountController {
     }
 
     @PutMapping(value = "/putMoney")
-    //    @ApiOperation(value = "Внесение средств")
-    public BankAccount putMoneyById(@RequestBody Operation operation) {
-        return accountService.putMoney(operation.getUser_id(), operation.getAmount(), operation.getDescription());
+    public ResponseEntity<BankAccount> putMoneyById(@RequestBody Operation operation)
+            throws AccountBalanceChangeException {
+        return ResponseEntity.ok(accountService.putMoney(operation.getUser_id(),
+                operation.getAmount(), operation.getDescription()));
     }
 
     @PostMapping(value = "/takeMoney")
     //    @ApiOperation(value = "Снятие средств")
-    public ResponseEntity<Object> takeMoneyById(@RequestBody Operation operation) {
-        return accountService.takeMoney(operation.getUser_id(), operation.getAmount(), operation.getDescription());
+    public ResponseEntity<Object> takeMoneyById(@RequestBody Operation operation)
+            throws AccountBalanceChangeException {
+        return ResponseEntity.ok(accountService.takeMoney(operation.getUser_id(),
+                operation.getAmount(), operation.getDescription()));
     }
 
     @PostMapping(value = "/transfer")
     //    @ApiOperation(value = "Перевод средств")
-    public ResponseEntity<Object> transferMoney(@RequestBody TransferRequestDTO transferRequestDTO) {
+    public ResponseEntity<Object> transferMoney(@RequestBody TransferRequestDTO transferRequestDTO)
+            throws AccountBalanceChangeException {
         return accountService.transferMoney(transferRequestDTO.getAccountSource(),
                 transferRequestDTO.getAccountDestination(), transferRequestDTO.getAmount());
     }

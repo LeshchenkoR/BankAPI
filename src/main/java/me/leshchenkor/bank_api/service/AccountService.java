@@ -5,6 +5,7 @@ import me.leshchenkor.bank_api.dto.OperationListDTO;
 import me.leshchenkor.bank_api.dto.OperationType;
 import me.leshchenkor.bank_api.entity.BankAccount;
 import me.leshchenkor.bank_api.entity.Operation;
+import me.leshchenkor.bank_api.exception.AccountBalanceChangeException;
 import me.leshchenkor.bank_api.exception.AccountNotFoundException;
 import me.leshchenkor.bank_api.exception.RecursiveTransactionException;
 import me.leshchenkor.bank_api.repository.BankAccountRepository;
@@ -24,15 +25,16 @@ public class AccountService {
     private final BankAccountRepository bankAccountRepository;
     private final OperationRepository operationRepository;
 
-    public ResponseEntity<Object> createAccount(BankAccount bankAcc) {
-        bankAccountRepository.save(bankAcc);
-        return ResponseEntity.status(HttpStatus.CREATED).body("New account created successfully");
+    public BankAccount createAccount(BankAccount bankAcc) {
+        double newBalance = bankAcc.getBalance() <= 0 ? 0 : bankAcc.getBalance();
+        bankAcc.setBalance(newBalance);
+        return bankAccountRepository.save(bankAcc);
     }
 
     public BankAccount findById(Long id) {
         return bankAccountRepository.findById(id).
                 orElseThrow(() -> new AccountNotFoundException
-                        (String.format("Account with [%s] not exist!", id)));
+                        (String.format("Account with ID %s not exist!", id)));
     }
 
     public void deleteAccount(Long userId) {
@@ -44,10 +46,6 @@ public class AccountService {
         return new ArrayList<>(bankAccountRepository.findAll());
     }
 
-//    public List<Operation> readAllOperations() {
-//        return new ArrayList<>(operationRepository.findAll());
-//    }
-
     public double getBalanceByID(Long userId) {
         BankAccount account = findById(userId);
         return account.getBalance();
@@ -55,31 +53,35 @@ public class AccountService {
 
 //---------------------------------------------------------------------------------------------------
 
-    public BankAccount putMoney(Long userID, double amount, String description) {
+    public BankAccount putMoney(Long userID, double amount, String description)
+            throws AccountBalanceChangeException {
+        if (amount <= 0) throw new AccountBalanceChangeException("Amount not valid");
         BankAccount account = findById(userID);
         Operation transfer = operationRepository
-                .save(new Operation(userID, new Date(), OperationType.CREDIT, amount, description));
+                .save(new Operation(userID, new Date(), OperationType.DEBIT, amount, description));
         account.setBalance(account.getBalance() + amount);
         operationRepository.saveAndFlush(transfer);
         return bankAccountRepository.save(account);
     }
 
-    public ResponseEntity<Object> takeMoney(Long userID, double amount, String description) {
+    public ResponseEntity<Object> takeMoney(Long userID, double amount, String description)
+            throws AccountBalanceChangeException {
         BankAccount account = findById(userID);
-        if (account.getBalance() < amount) {
-            return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).
-                    body(String.format("Not enough money: '%s", amount));
+        double newBalance = account.getBalance() - amount;
+        if (newBalance < 0) {
+            throw new AccountBalanceChangeException(String.format("Not enough money: '%s", amount));
         }
         Operation transfer = operationRepository
-                .save(new Operation(userID, new Date(), OperationType.DEBIT, amount, description));
+                .save(new Operation(userID, new Date(), OperationType.CREDIT, amount, description));
         operationRepository.saveAndFlush(transfer);
 
-        account.setBalance(account.getBalance() - amount);
+        account.setBalance(newBalance);
         bankAccountRepository.save(account);
         return ResponseEntity.status(HttpStatus.OK).body("Took successfully");
     }
 
-    public ResponseEntity<Object> transferMoney(Long accountIdSource, Long accountIdDestination, double amount) {
+    public ResponseEntity<Object> transferMoney(Long accountIdSource, Long accountIdDestination, double amount)
+            throws AccountBalanceChangeException {
         if (accountIdSource.equals(accountIdDestination)) {
             throw new RecursiveTransactionException("Transaction to yourself");
         }
