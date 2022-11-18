@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(code = HttpStatus.BAD_REQUEST, reason = "Recursive transaction")
 public class RecursiveTransactionException extends RuntimeException {
+
     public RecursiveTransactionException(String message) {
         super(message);
     }

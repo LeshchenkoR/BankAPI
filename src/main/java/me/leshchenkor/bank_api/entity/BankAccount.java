@@ -28,5 +28,5 @@ public class BankAccount {
     @OneToMany(mappedBy = "user_id")
    // @JoinColumn(name = "user_id",referencedColumnName = "user_id")
     @JsonIgnore
-    private List<Operation> operations;
+    private List<Operations> operations;
 }
