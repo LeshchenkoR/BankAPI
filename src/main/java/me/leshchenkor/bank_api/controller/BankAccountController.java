@@ -1,9 +1,16 @@
 package me.leshchenkor.bank_api.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import me.leshchenkor.bank_api.dto.OperationListDTO;
 import me.leshchenkor.bank_api.dto.TransferRequestDTO;
 import me.leshchenkor.bank_api.entity.BankAccount;
-import me.leshchenkor.bank_api.entity.Operation;
+import me.leshchenkor.bank_api.entity.Operations;
 import me.leshchenkor.bank_api.exception.AccountBalanceChangeException;
 import me.leshchenkor.bank_api.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,32 +20,42 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Bank account controller")
 @RestController
 @RequestMapping("/api")
 public class BankAccountController {
     @Autowired
     AccountService accountService;
 
+    @Operation(summary = "Create new account")
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(value = "/create")
-    //  @Operation(summary = "Создание нового аккаунта")
-    public ResponseEntity<Object> createAccount(@RequestBody BankAccount acc) {
-        return ResponseEntity.ok(accountService.createAccount(acc));
+    public BankAccount createAccount(@RequestBody BankAccount acc) {
+        return accountService.createAccount(acc);
     }
 
+    @Operation(summary = "Find account by id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found the account",
+                    content = {@Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BankAccount.class))}),
+            @ApiResponse(responseCode = "404", description = "Account not found",
+                    content = @Content)})
     @GetMapping("{id}")
-    public ResponseEntity<BankAccount> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(accountService.findById(id));
+    public BankAccount getById(@Parameter(description = "id of account to be searched")
+                               @PathVariable Long id) {
+        return accountService.findById(id);
     }
 
-    @DeleteMapping("/delete/{user_id}")
-    //    @ApiOperation(value = "Удаление аккаунта")
+    @Operation(summary = "Delete account")
+    @DeleteMapping("/{user_id}")
     public ResponseEntity<?> deleteBankAccount(@PathVariable Long user_id) {
         accountService.deleteAccount(user_id);
         return ResponseEntity.ok().body("Success");
     }
 
+    @Operation(summary = "Get all accounts")
     @GetMapping(value = "/accounts")
-    //    @ApiOperation(value = "Получение списка всех аккаунтов")
     public ResponseEntity<List<BankAccount>> readAccounts() {
         final List<BankAccount> bankAccounts = accountService.readAllAccounts();
         return bankAccounts != null && !bankAccounts.isEmpty()
@@ -47,14 +64,14 @@ public class BankAccountController {
     }
 //------------------------------------------------------------------------------------------------------
 
+    @Operation(summary = "Get account balance by id")
     @GetMapping(value = "/getBalance/{userId}")
-//    @ApiOperation(value = "Получение баланса по id")
     public double readBankAccount(@PathVariable(value = "userId") Long id) {
         return accountService.getBalanceByID(id);
     }
 
     @PutMapping(value = "/putMoney")
-    public ResponseEntity<BankAccount> putMoneyById(@RequestBody Operation operation)
+    public ResponseEntity<BankAccount> putMoneyById(@RequestBody Operations operation)
             throws AccountBalanceChangeException {
         return ResponseEntity.ok(accountService.putMoney(operation.getUser_id(),
                 operation.getAmount(), operation.getDescription()));
@@ -62,7 +79,7 @@ public class BankAccountController {
 
     @PostMapping(value = "/takeMoney")
     //    @ApiOperation(value = "Снятие средств")
-    public ResponseEntity<Object> takeMoneyById(@RequestBody Operation operation)
+    public ResponseEntity<Object> takeMoneyById(@RequestBody Operations operation)
             throws AccountBalanceChangeException {
         return ResponseEntity.ok(accountService.takeMoney(operation.getUser_id(),
                 operation.getAmount(), operation.getDescription()));
@@ -89,7 +106,7 @@ public class BankAccountController {
 
     @PostMapping("/history")
     //    @ApiOperation(value = "Получение списка всех операций за период")
-    public List<Operation> getOperations(@RequestBody OperationListDTO listDTO) {
+    public List<Operations> getOperations(@RequestBody OperationListDTO listDTO) {
         return accountService.getOperationList(listDTO);
     }
 }

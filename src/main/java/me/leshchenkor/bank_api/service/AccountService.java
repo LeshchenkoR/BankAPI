@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import me.leshchenkor.bank_api.dto.OperationListDTO;
 import me.leshchenkor.bank_api.dto.OperationType;
 import me.leshchenkor.bank_api.entity.BankAccount;
-import me.leshchenkor.bank_api.entity.Operation;
+import me.leshchenkor.bank_api.entity.Operations;
 import me.leshchenkor.bank_api.exception.AccountBalanceChangeException;
 import me.leshchenkor.bank_api.exception.AccountNotFoundException;
 import me.leshchenkor.bank_api.exception.RecursiveTransactionException;
@@ -13,6 +13,7 @@ import me.leshchenkor.bank_api.repository.OperationRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -42,6 +43,7 @@ public class AccountService {
         bankAccountRepository.delete(account);
     }
 
+    // метод можно убрать из сервисного слоя, вызывать в контроллере. Он не меняет БД
     public List<BankAccount> readAllAccounts() {
         return new ArrayList<>(bankAccountRepository.findAll());
     }
@@ -57,8 +59,8 @@ public class AccountService {
             throws AccountBalanceChangeException {
         if (amount <= 0) throw new AccountBalanceChangeException("Amount not valid");
         BankAccount account = findById(userID);
-        Operation transfer = operationRepository
-                .save(new Operation(userID, new Date(), OperationType.DEBIT, amount, description));
+        Operations transfer = operationRepository
+                .save(new Operations(userID, new Date(), OperationType.DEBIT, amount, description));
         account.setBalance(account.getBalance() + amount);
         operationRepository.saveAndFlush(transfer);
         return bankAccountRepository.save(account);
@@ -71,8 +73,8 @@ public class AccountService {
         if (newBalance < 0) {
             throw new AccountBalanceChangeException(String.format("Not enough money: '%s", amount));
         }
-        Operation transfer = operationRepository
-                .save(new Operation(userID, new Date(), OperationType.CREDIT, amount, description));
+        Operations transfer = operationRepository
+                .save(new Operations(userID, new Date(), OperationType.CREDIT, amount, description));
         operationRepository.saveAndFlush(transfer);
 
         account.setBalance(newBalance);
@@ -80,6 +82,7 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body("Took successfully");
     }
 
+    @Transactional
     public ResponseEntity<Object> transferMoney(Long accountIdSource, Long accountIdDestination, double amount)
             throws AccountBalanceChangeException {
         if (accountIdSource.equals(accountIdDestination)) {
@@ -90,7 +93,10 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body("Transfer successfully");
     }
 
-    public List<Operation> getOperationList(OperationListDTO listDTO) {
+    public List<Operations> getOperationList(OperationListDTO listDTO) {
+        if (listDTO.getStartDate() == null || listDTO.getFinishDate() == null) {
+            return operationRepository.findAll();
+        }
         return operationRepository.findByDateBetween(listDTO.getStartDate(), listDTO.getFinishDate());
     }
 }
