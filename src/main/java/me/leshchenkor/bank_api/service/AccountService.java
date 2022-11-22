@@ -1,7 +1,6 @@
 package me.leshchenkor.bank_api.service;
 
 import lombok.RequiredArgsConstructor;
-import me.leshchenkor.bank_api.dto.OperationListDTO;
 import me.leshchenkor.bank_api.dto.OperationType;
 import me.leshchenkor.bank_api.entity.BankAccount;
 import me.leshchenkor.bank_api.entity.Operations;
@@ -43,7 +42,6 @@ public class AccountService {
         bankAccountRepository.delete(account);
     }
 
-    // метод можно убрать из сервисного слоя, вызывать в контроллере. Он не меняет БД
     public List<BankAccount> readAllAccounts() {
         return new ArrayList<>(bankAccountRepository.findAll());
     }
@@ -53,7 +51,6 @@ public class AccountService {
         return account.getBalance();
     }
 
-//---------------------------------------------------------------------------------------------------
 
     public BankAccount putMoney(Long userID, double amount, String description)
             throws AccountBalanceChangeException {
@@ -93,10 +90,16 @@ public class AccountService {
         return ResponseEntity.status(HttpStatus.OK).body("Transfer successfully");
     }
 
-    public List<Operations> getOperationList(OperationListDTO listDTO) {
-        if (listDTO.getStartDate() == null || listDTO.getFinishDate() == null) {
+    public List<Operations> getOperationList(Date dateStart, Date dateEnd) {
+        if (dateStart == null || dateEnd == null) {
             return operationRepository.findAll();
         }
-        return operationRepository.findByDateBetween(listDTO.getStartDate(), listDTO.getFinishDate());
+        return operationRepository.findByDateBetween(dateStart, dateEnd);
     }
+//    public List<Operations> getOperationList(OperationListDTO listDTO) {
+//       if (listDTO.getStartDate() == null || listDTO.getFinishDate() == null) {
+//            return operationRepository.findAll();
+//        }
+//        return operationRepository.findByDateBetween(listDTO.getStartDate(), listDTO.getFinishDate());
+//    }
 }

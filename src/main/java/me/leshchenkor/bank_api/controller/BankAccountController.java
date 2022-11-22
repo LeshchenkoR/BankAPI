@@ -7,17 +7,18 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import me.leshchenkor.bank_api.dto.OperationListDTO;
 import me.leshchenkor.bank_api.dto.TransferRequestDTO;
 import me.leshchenkor.bank_api.entity.BankAccount;
 import me.leshchenkor.bank_api.entity.Operations;
 import me.leshchenkor.bank_api.exception.AccountBalanceChangeException;
 import me.leshchenkor.bank_api.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 
 @Tag(name = "Bank account controller")
@@ -77,36 +78,31 @@ public class BankAccountController {
                 operation.getAmount(), operation.getDescription()));
     }
 
+    @Operation(summary = "Take money by id")
     @PostMapping(value = "/takeMoney")
-    //    @ApiOperation(value = "Снятие средств")
     public ResponseEntity<Object> takeMoneyById(@RequestBody Operations operation)
             throws AccountBalanceChangeException {
         return ResponseEntity.ok(accountService.takeMoney(operation.getUser_id(),
                 operation.getAmount(), operation.getDescription()));
     }
 
+    @Operation(summary = "Transfer money between accounts")
     @PostMapping(value = "/transfer")
-    //    @ApiOperation(value = "Перевод средств")
     public ResponseEntity<Object> transferMoney(@RequestBody TransferRequestDTO transferRequestDTO)
             throws AccountBalanceChangeException {
         return accountService.transferMoney(transferRequestDTO.getAccountSource(),
                 transferRequestDTO.getAccountDestination(), transferRequestDTO.getAmount());
     }
 
-//    @GetMapping(value = "/history")
-//    //    @ApiOperation(value = "Получение списка всех операций за период")
-//    public ResponseEntity<List<Operation>> getOperationsBetweenDates
-//            (@RequestParam(required = false ) Date dateFrom, @RequestParam(required = false ) Date dateTo) {
-//        final List<Operation> operationBetweenDates = accountService.getOperationList(dateFrom, dateTo);
-//        return operationBetweenDates != null && !operationBetweenDates.isEmpty()
-//                ? new ResponseEntity<>(operationBetweenDates, HttpStatus.OK)
-//                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    //  @PostMapping("/history")
+//    public List<Operations> getOperations(@RequestBody OperationListDTO listDTO) {
+//        return accountService.getOperationList(listDTO);
 //    }
-    //----------------------------------------------------------------------------
 
-    @PostMapping("/history")
-    //    @ApiOperation(value = "Получение списка всех операций за период")
-    public List<Operations> getOperations(@RequestBody OperationListDTO listDTO) {
-        return accountService.getOperationList(listDTO);
+    @Operation(summary = "Get operation history")
+    @GetMapping("/history2")
+    public List<Operations> getOperations(@RequestParam(required = false) @DateTimeFormat(pattern="yyyy-MM-dd") Date dateStart,
+                                          @RequestParam(required = false) @DateTimeFormat(pattern="yyyy-MM-dd") Date dateEnd) {
+        return accountService.getOperationList(dateStart, dateEnd);
     }
 }
